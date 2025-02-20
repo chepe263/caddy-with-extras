@@ -5,16 +5,16 @@ on:
     types:
       - published  # Trigger the workflow on new release publication
   workflow_dispatch:
-    inputs:
-      description:
-        # Friendly description to be shown in the UI instead of 'name'
-        description: 'Simple text'
-        # Default value if no value is explicitly provided
-        default: 'Hello world'
-        # Input has to be provided for the workflow to run
-        required: false
-        # The data type of the input
-        type: string
+    # inputs:
+    #   description:
+    #     # Friendly description to be shown in the UI instead of 'name'
+    #     description: 'Simple text'
+    #     # Default value if no value is explicitly provided
+    #     default: 'Hello world'
+    #     # Input has to be provided for the workflow to run
+    #     required: false
+    #     # The data type of the input
+    #     type: string
 
 jobs:
   build:
@@ -38,7 +38,7 @@ jobs:
           xcaddy build --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/replace-response
 
       - name: Upload Caddy binary as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: caddy-binary
           path: caddy
