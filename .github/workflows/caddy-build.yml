@@ -33,7 +33,16 @@ jobs:
         with:
           name: caddy-binary
           path: caddy
+
+      - name: Generate Release Tag
+        id: generate_string
+        run: |
+          # Get the current date and time in the format "YYYY-MM-DD-HHMMSS"
+          release_tag="release-$(date '+%Y-%m-%d-%H%M%S')"
+          # Store the release string in an output variable
+          echo "::set-output name=release_tag::$release_tag"
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.generate_string.outputs.release_tag }}
           files: caddy-binary
