@@ -4,17 +4,17 @@ on:
   release:
     types:
       - published  # Trigger the workflow on new release publication
-    workflow_dispatch:
-      inputs:
-        description:
-          # Friendly description to be shown in the UI instead of 'name'
-          description: 'Simple text'
-          # Default value if no value is explicitly provided
-          default: 'Hello world'
-          # Input has to be provided for the workflow to run
-          required: false
-          # The data type of the input
-          type: string
+  workflow_dispatch:
+    inputs:
+      description:
+        # Friendly description to be shown in the UI instead of 'name'
+        description: 'Simple text'
+        # Default value if no value is explicitly provided
+        default: 'Hello world'
+        # Input has to be provided for the workflow to run
+        required: false
+        # The data type of the input
+        type: string
 
 jobs:
   build:
