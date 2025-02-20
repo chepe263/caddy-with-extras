@@ -47,3 +47,5 @@ jobs:
         with:
           tag_name: ${{ steps.generate_string.outputs.release_tag }}
           files: caddy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
