@@ -40,12 +40,12 @@ jobs:
           # Get the current date and time in the format "YYYY-MM-DD-HHMMSS"
           release_tag="release-$(date '+%Y-%m-%d-%H%M%S')"
           # Store the release string in an output variable
-          echo "::set-output name=release_tag::$release_tag"
+          echo "release_tag=$release_tag" >> $GITHUB_ENV
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.generate_string.outputs.release_tag }}
+          tag_name: ${{ env.release_tag }}
           files: caddy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
