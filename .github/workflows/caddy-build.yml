@@ -1,0 +1,33 @@
+name: Build Caddy on New Release
+
+on:
+  release:
+    types:
+      - published  # Trigger the workflow on new release publication
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Use Ubuntu as the build environment
+    
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Set up Go (latest stable version)
+        uses: actions/setup-go@v2
+        with:
+          go-version: 'latest'  # Automatically use the latest stable Go version
+
+      - name: Install xcaddy for custom builds
+        run: |
+          go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+      - name: Build Caddy with custom plugins
+        run: |
+          xcaddy build --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/replace-response
+
+      - name: Upload Caddy binary as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: caddy-binary
+          path: caddy
