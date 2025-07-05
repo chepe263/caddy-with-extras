@@ -1,0 +1,58 @@
+name: Build Caddy on New Release (alpine)
+
+on:
+  release:
+    types:
+      - published  # Trigger the workflow on new release publication
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Use Ubuntu as the build environment
+    
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Set up Go (latest stable version)
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          check-latest: true
+
+      - name: Install xcaddy for custom builds
+        run: |
+          go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+      - name: Build Caddy with custom plugins for Alpine Linux
+        env:
+          CGO_ENABLED: 1
+          GOOS: linux
+          GOARCH: amd64
+          CC: musl-gcc
+        run: |
+          sudo apt-get update && sudo apt-get install -y musl-tools
+          xcaddy build --with github.com/caddy-dns/porkbun --with github.com/caddyserver/replace-response
+          mv caddy caddy-alpine
+
+      - name: Upload Caddy binary as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: caddy-binary-alpine
+          path: caddy-alpine
+
+      - name: Generate Release Tag
+        id: generate_string
+        run: |
+          # Get the current date and time in the format "YYYY-MM-DD-HHMMSS"
+          release_tag="release-$(date '+%Y-%m-%d-%H%M%S')"
+          # Store the release string in an output variable
+          echo "release_tag=$release_tag" >> $GITHUB_ENV
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.release_tag }}
+          files: caddy-alpine
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
