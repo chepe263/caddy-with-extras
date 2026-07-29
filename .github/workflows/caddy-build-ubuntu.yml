@@ -1,51 +1,50 @@
-name: Build Caddy on New Release
+name: Build Custom Caddy (ubuntu/glibc)
 
 on:
   release:
-    types:
-      - published  # Trigger the workflow on new release publication
+    types: [published]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Use Ubuntu as the build environment
-    
-    steps:
-      - name: Checkout the code
-        uses: actions/checkout@v2
+    runs-on: ubuntu-latest
 
-      - name: Set up Go (latest stable version)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: 'stable'
           check-latest: true
+          cache: true
 
-      - name: Install xcaddy for custom builds
+      - name: Install xcaddy
+        run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+      - name: Build Caddy (upstream master)
         run: |
-          go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+          xcaddy build master \
+            --with github.com/caddy-dns/porkbun \
+            --with github.com/caddyserver/replace-response
 
-      - name: Build Caddy with custom plugins
-        run: |
-          xcaddy build --with github.com/caddy-dns/porkbun --with github.com/caddyserver/replace-response
-
-      - name: Upload Caddy binary as artifact
+      - name: Upload binary as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: caddy-binary
+          name: caddy-ubuntu
           path: caddy
 
-      - name: Generate Release Tag
-        id: generate_string
-        run: |
-          # Get the current date and time in the format "YYYY-MM-DD-HHMMSS"
-          release_tag="release-$(date '+%Y-%m-%d-%H%M%S')"
-          # Store the release string in an output variable
-          echo "release_tag=$release_tag" >> $GITHUB_ENV
+      - name: Generate release tag
+        run: echo "release_tag=release-$(date '+%Y-%m-%d-%H%M%S')" >> $GITHUB_ENV
 
-      - name: Release
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.release_tag }}
           files: caddy
+          body: |
+            Custom Caddy build (ubuntu/glibc)
+            - Base: caddyserver/caddy@master
+            - Plugins: caddy-dns/porkbun, replace-response
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
