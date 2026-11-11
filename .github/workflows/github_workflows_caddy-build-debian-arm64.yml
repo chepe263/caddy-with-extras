@@ -1,0 +1,60 @@
+name: Build Custom Caddy (Debian ARM64)
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          check-latest: true
+          cache: true
+
+      - name: Install xcaddy
+        run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+      - name: Build Caddy for Debian ARM64
+        env:
+          GOOS: linux
+          GOARCH: arm64
+          CGO_ENABLED: 0
+        run: |
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          xcaddy build master \
+            --with github.com/caddy-dns/porkbun \
+            --with github.com/caddyserver/replace-response
+          mv caddy caddy-debian-arm64
+
+      - name: Upload binary as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: caddy-debian-arm64
+          path: caddy-debian-arm64
+
+      - name: Generate release tag
+        run: echo "release_tag=release-$(date '+%Y-%m-%d-%H%M%S')" >> "$GITHUB_ENV"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.release_tag }}
+          files: caddy-debian-arm64
+          body: |
+            Custom Caddy build (Debian/Linux ARM64)
+            - Architecture: arm64 (aarch64)
+            - Base: caddyserver/caddy@master
+            - Plugins: caddy-dns/porkbun, replace-response
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
